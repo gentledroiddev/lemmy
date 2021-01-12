@@ -35,6 +35,7 @@ fi
 
 killall lemmy_server || true
 
+
 echo "start alpha"
 LEMMY_HOSTNAME=lemmy-alpha:8541 \
   LEMMY_PORT=8541 \
