@@ -315,7 +315,10 @@ async fn collect_non_local_mentions(
   let parent_creator = get_comment_parent_creator(context.pool(), comment).await?;
   let mut addressed_ccs = vec![community.actor_id()?, parent_creator.actor_id()?];
   // Note: dont include community inbox here, as we send to it separately with `send_to_community()`
-  let mut inboxes = vec![parent_creator.get_shared_inbox_url()?];
+  let mut inboxes: Vec<Url> = Vec::new();
+  if !parent_creator.local {
+    inboxes.push(parent_creator.get_shared_inbox_url()?);
+  }
 
   // Add the mention tag
   let mut tags = Vec::new();
