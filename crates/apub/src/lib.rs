@@ -218,6 +218,37 @@ pub trait ActorType {
   }
 }
 
+pub enum EndpointType {
+  Community,
+  User,
+  Post,
+  Comment,
+  PrivateMessage,
+}
+
+/// Generates the ActivityPub ID for a given object type and ID.
+pub fn generate_apub_endpoint(endpoint_type: EndpointType, name: &str) -> Result<lemmy_db_schema::Url, ParseError> {
+  let point = match endpoint_type {
+    EndpointType::Community => "c",
+    EndpointType::User => "u",
+    EndpointType::Post => "post",
+    EndpointType::Comment => "comment",
+    EndpointType::PrivateMessage => "private_message",
+  };
+
+  Ok(Url::parse(&format!(
+    "{}/{}/{}",
+    Settings::get().get_protocol_and_hostname(),
+    point,
+    name
+  ))?.into())
+}
+
+
+pub fn generate_followers_url(actor_id: &Url) -> Result<lemmy_db_schema::Url, ParseError> {
+  Ok(Url::parse(&format!("{}/followers", actor_id))?.into())
+}
+
 /// Store a sent or received activity in the database, for logging purposes. These records are not
 /// persistent.
 pub(crate) async fn insert_activity<T>(

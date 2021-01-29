@@ -99,6 +99,7 @@ table! {
         last_refreshed_at -> Timestamp,
         icon -> Nullable<Text>,
         banner -> Nullable<Text>,
+        followers_url -> Text,
     }
 }
 

@@ -53,7 +53,7 @@ pub trait PrivateMessage_ {
   fn update_ap_id(
     conn: &PgConnection,
     private_message_id: i32,
-    apub_id: String,
+    apub_id: Url,
   ) -> Result<PrivateMessage, Error>;
   fn update_content(
     conn: &PgConnection,
@@ -80,7 +80,7 @@ impl PrivateMessage_ for PrivateMessage {
   fn update_ap_id(
     conn: &PgConnection,
     private_message_id: i32,
-    apub_id: String,
+    apub_id: Url,
   ) -> Result<PrivateMessage, Error> {
     use lemmy_db_schema::schema::private_message::dsl::*;
 

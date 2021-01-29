@@ -216,6 +216,7 @@ impl FromApubToForm<GroupExt> for CommunityForm {
       last_refreshed_at: Some(naive_now()),
       icon,
       banner,
+      followers_url: Some(group.inner.followers()?.context(location_info!())?.to_owned().into())
     })
   }
 }

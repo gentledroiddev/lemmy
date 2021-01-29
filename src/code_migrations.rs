@@ -18,11 +18,12 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_utils::{
-  apub::{generate_actor_keypair, make_apub_endpoint, EndpointType},
+  apub::{generate_actor_keypair},
   settings::Settings,
   LemmyError,
 };
 use log::info;
+use lemmy_apub::{EndpointType, generate_apub_endpoint, generate_followers_url};
 
 pub fn run_advanced_migrations(conn: &PgConnection) -> Result<(), LemmyError> {
   user_updates_2020_04_02(&conn)?;
@@ -68,7 +69,7 @@ fn user_updates_2020_04_02(conn: &PgConnection) -> Result<(), LemmyError> {
       lang: cuser.lang.to_owned(),
       show_avatars: cuser.show_avatars,
       send_notifications_to_email: cuser.send_notifications_to_email,
-      actor_id: Some(make_apub_endpoint(EndpointType::User, &cuser.name).into()),
+      actor_id: Some(generate_apub_endpoint(EndpointType::User, &cuser.name)?),
       bio: Some(cuser.bio.to_owned()),
       local: cuser.local,
       private_key: Some(keypair.private_key),
@@ -97,6 +98,9 @@ fn community_updates_2020_04_02(conn: &PgConnection) -> Result<(), LemmyError> {
 
   for ccommunity in &incorrect_communities {
     let keypair = generate_actor_keypair()?;
+    // TODO: wtf is this compilation error here
+    let actor_id: lemmy_db_schema::Url =
+      generate_apub_endpoint(EndpointType::Community, &ccommunity.name)?;
 
     let form = CommunityForm {
       name: ccommunity.name.to_owned(),
@@ -108,7 +112,7 @@ fn community_updates_2020_04_02(conn: &PgConnection) -> Result<(), LemmyError> {
       deleted: None,
       nsfw: ccommunity.nsfw,
       updated: None,
-      actor_id: Some(make_apub_endpoint(EndpointType::Community, &ccommunity.name).into()),
+      actor_id: Some(actor_id.to_owned()),
       local: ccommunity.local,
       private_key: Some(keypair.private_key),
       public_key: Some(keypair.public_key),
@@ -116,6 +120,7 @@ fn community_updates_2020_04_02(conn: &PgConnection) -> Result<(), LemmyError> {
       published: None,
       icon: Some(ccommunity.icon.to_owned()),
       banner: Some(ccommunity.banner.to_owned()),
+      followers_url: Some(generate_followers_url(&actor_id.into_inner())?)
     };
 
     Community::update(&conn, ccommunity.id, &form)?;
@@ -138,7 +143,7 @@ fn post_updates_2020_04_03(conn: &PgConnection) -> Result<(), LemmyError> {
     .load::<Post>(conn)?;
 
   for cpost in &incorrect_posts {
-    let apub_id = make_apub_endpoint(EndpointType::Post, &cpost.id.to_string()).to_string();
+    let apub_id = generate_apub_endpoint(EndpointType::Post, &cpost.id.to_string())?;
     Post::update_ap_id(&conn, cpost.id, apub_id)?;
   }
 
@@ -159,7 +164,7 @@ fn comment_updates_2020_04_03(conn: &PgConnection) -> Result<(), LemmyError> {
     .load::<Comment>(conn)?;
 
   for ccomment in &incorrect_comments {
-    let apub_id = make_apub_endpoint(EndpointType::Comment, &ccomment.id.to_string()).to_string();
+    let apub_id = generate_apub_endpoint(EndpointType::Comment, &ccomment.id.to_string())?;
     Comment::update_ap_id(&conn, ccomment.id, apub_id)?;
   }
 
@@ -180,7 +185,7 @@ fn private_message_updates_2020_05_05(conn: &PgConnection) -> Result<(), LemmyEr
     .load::<PrivateMessage>(conn)?;
 
   for cpm in &incorrect_pms {
-    let apub_id = make_apub_endpoint(EndpointType::PrivateMessage, &cpm.id.to_string()).to_string();
+    let apub_id = generate_apub_endpoint(EndpointType::PrivateMessage, &cpm.id.to_string())?;
     PrivateMessage::update_ap_id(&conn, cpm.id, apub_id)?;
   }
 

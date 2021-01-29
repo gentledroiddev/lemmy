@@ -14,7 +14,7 @@ use lemmy_db_schema::{
 };
 
 pub trait Comment_ {
-  fn update_ap_id(conn: &PgConnection, comment_id: i32, apub_id: String) -> Result<Comment, Error>;
+  fn update_ap_id(conn: &PgConnection, comment_id: i32, apub_id: Url) -> Result<Comment, Error>;
   fn permadelete_for_creator(
     conn: &PgConnection,
     for_creator_id: i32,
@@ -43,7 +43,7 @@ pub trait Comment_ {
 }
 
 impl Comment_ for Comment {
-  fn update_ap_id(conn: &PgConnection, comment_id: i32, apub_id: String) -> Result<Self, Error> {
+  fn update_ap_id(conn: &PgConnection, comment_id: i32, apub_id: Url) -> Result<Self, Error> {
     use lemmy_db_schema::schema::comment::dsl::*;
 
     diesel::update(comment.find(comment_id))

@@ -38,7 +38,6 @@ use lemmy_db_views_actor::{
 };
 use lemmy_structs::{blocking, post::*};
 use lemmy_utils::{
-  apub::{make_apub_endpoint, EndpointType},
   request::fetch_iframely_and_pictrs_data,
   utils::{check_slurs, check_slurs_opt, is_valid_post_title},
   APIError,
@@ -51,6 +50,7 @@ use lemmy_websocket::{
   UserOperation,
 };
 use std::str::FromStr;
+use lemmy_apub::{EndpointType, generate_apub_endpoint};
 
 #[async_trait::async_trait(?Send)]
 impl Perform for CreatePost {
@@ -115,10 +115,10 @@ impl Perform for CreatePost {
       };
 
     let inserted_post_id = inserted_post.id;
-    let updated_post = match blocking(context.pool(), move |conn| {
+    let updated_post = match blocking(context.pool(), move |conn| -> Result<Post, LemmyError> {
       let apub_id =
-        make_apub_endpoint(EndpointType::Post, &inserted_post_id.to_string()).to_string();
-      Post::update_ap_id(conn, inserted_post_id, apub_id)
+        generate_apub_endpoint(EndpointType::Post, &inserted_post_id.to_string())?;
+      Ok(Post::update_ap_id(conn, inserted_post_id, apub_id)?)
     })
     .await?
     {
